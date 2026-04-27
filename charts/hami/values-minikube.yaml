@@ -1,0 +1,40 @@
+# Values for running HAMi on a local minikube cluster with a real NVIDIA GPU (e.g. Tesla T4).
+# Usage:
+#   helm repo add hami-charts https://project-hami.github.io/HAMi/ --force-update
+#   helm repo update
+#   helm upgrade --install hami hami-charts/hami -n hami-system --create-namespace -f charts/hami/values-minikube.yaml
+
+global:
+  # Remote chart currently resolves most HAMi component tags from global.imageTag.
+  imageTag: v0.0.1
+
+scheduler:
+  # minikube is usually single-node; disable leader election for simpler startup.
+  leaderElect: false
+  kubeScheduler:
+    image:
+      # Use upstream registry/repository instead of the default mirror.
+      registry: registry.k8s.io
+      repository: kube-scheduler
+      # Keep empty to auto-resolve from cluster version.
+      tag: ""
+  extender:
+    image:
+      registry: docker.io
+      repository: library/hami
+
+devicePlugin:
+  # Real NVIDIA GPU mode.
+  enabled: true
+  # Default chart value requires node label gpu=on; empty selector works out-of-the-box on minikube.
+  nvidiaNodeSelector: {}
+  image:
+    registry: docker.io
+    repository: library/hami
+  monitor:
+    image:
+      registry: docker.io
+      repository: library/hami
+
+mockDevicePlugin:
+  enabled: false
