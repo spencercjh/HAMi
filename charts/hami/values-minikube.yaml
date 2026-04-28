@@ -27,7 +27,7 @@ devicePlugin:
   # Real NVIDIA GPU mode.
   enabled: true
   # Default chart value requires node label gpu=on; empty selector works out-of-the-box on minikube.
-  nvidiaNodeSelector: {}
+  nvidiaNodeSelector: null
   image:
     registry: docker.io
     repository: library/hami
