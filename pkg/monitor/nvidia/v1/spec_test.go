@@ -18,7 +18,9 @@ package v1
 
 import (
 	"testing"
+	"unsafe"
 
+	"github.com/Project-HAMi/HAMi/pkg/monitor/nvidia/api"
 	"gotest.tools/v3/assert"
 )
 
@@ -687,6 +689,104 @@ func Test_SetDeviceSmLimit(t *testing.T) {
 			result := test.args.spec.sr.smLimit
 			assert.DeepEqual(t, result, test.want)
 		})
+	}
+}
+
+func TestSpec_DeviceMemoryContextSize_ClampsProcnum(t *testing.T) {
+	spec := Spec{
+		sr: &sharedRegionT{
+			procnum: -1,
+			procs: [1024]shrregProcSlotT{
+				{used: [16]deviceMemory{{contextSize: 99}}},
+			},
+		},
+	}
+	assert.Equal(t, spec.DeviceMemoryContextSize(0), uint64(0))
+
+	spec.sr.procnum = 2048
+	spec.sr.procs[0].used[0].contextSize = 7
+	assert.Equal(t, spec.DeviceMemoryContextSize(0), uint64(7))
+}
+
+func TestSpecWithSemPostinit_AccessorsAndProcnumClamp(t *testing.T) {
+	spec := SpecWithSemPostinit{
+		sr: &sharedRegionTWithSemPostinit{
+			num:               2,
+			procnum:           2048,
+			priority:          5,
+			lastKernelTime:    11,
+			recentKernel:      3,
+			utilizationSwitch: 1,
+			limit:             [16]uint64{10, 20},
+			uuids:             [16]uuid{{uuid: [96]byte{'g', 'p', 'u', '0'}}, {uuid: [96]byte{'g', 'p', 'u', '1'}}},
+			procs: [1024]shrregProcSlotTWithSeqlock{
+				{
+					used: [16]deviceMemory{
+						{contextSize: 7, moduleSize: 8, bufferSize: 9, offset: 10, total: 11},
+						{contextSize: 1},
+					},
+					deviceUtil: [16]deviceUtilization{{smUtil: 12}},
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, spec.DeviceMax(), maxDevices)
+	assert.Equal(t, spec.DeviceNum(), 2)
+	assert.Equal(t, spec.DeviceMemoryContextSize(0), uint64(7))
+	assert.Equal(t, spec.DeviceMemoryModuleSize(0), uint64(8))
+	assert.Equal(t, spec.DeviceMemoryBufferSize(0), uint64(9))
+	assert.Equal(t, spec.DeviceMemoryOffset(0), uint64(10))
+	assert.Equal(t, spec.DeviceMemoryTotal(0), uint64(11))
+	assert.Equal(t, spec.DeviceSmUtil(0), uint64(12))
+
+	spec.SetDeviceSmLimit(55)
+	assert.Equal(t, spec.sr.smLimit[0], uint64(55))
+	assert.Equal(t, spec.sr.smLimit[1], uint64(55))
+
+	assert.Equal(t, spec.IsValidUUID(0), true)
+	assert.Equal(t, spec.DeviceUUID(0)[:4], "gpu0")
+	assert.Equal(t, spec.DeviceMemoryLimit(1), uint64(20))
+	spec.SetDeviceMemoryLimit(77)
+	assert.Equal(t, spec.sr.limit[0], uint64(77))
+	assert.Equal(t, spec.sr.limit[1], uint64(77))
+	assert.Equal(t, spec.LastKernelTime(), int64(11))
+	assert.Equal(t, spec.GetPriority(), 5)
+	assert.Equal(t, spec.GetRecentKernel(), int32(3))
+	spec.SetRecentKernel(8)
+	assert.Equal(t, spec.GetRecentKernel(), int32(8))
+	assert.Equal(t, spec.GetUtilizationSwitch(), int32(1))
+	spec.SetUtilizationSwitch(2)
+	assert.Equal(t, spec.GetUtilizationSwitch(), int32(2))
+}
+
+func TestCastSpecWithSemPostinitAndRegister(t *testing.T) {
+	data := make([]byte, int(unsafe.Sizeof(sharedRegionTWithSemPostinit{})))
+	spec := CastSpecWithSemPostinit(data)
+	if spec.sr == nil {
+		t.Fatal("expected cast spec to contain backing struct")
+	}
+
+	Register()
+
+	semFactory := api.FindFactory(&api.Header{MajorVersion: 1, MinorVersion: 2}, 1024)
+	if semFactory == nil {
+		t.Fatal("expected v1 sem factory, got nil")
+	}
+	assert.Equal(t, semFactory.Name(), "v1-sem")
+	semCasted := semFactory.Cast(make([]byte, int(unsafe.Sizeof(sharedRegionTWithSemPostinit{}))))
+	if _, ok := semCasted.(SpecWithSemPostinit); !ok {
+		t.Fatalf("expected SpecWithSemPostinit from sem factory, got %T", semCasted)
+	}
+
+	baseFactory := api.FindFactory(&api.Header{MajorVersion: 1, MinorVersion: 1}, 1024)
+	if baseFactory == nil {
+		t.Fatal("expected v1 base factory, got nil")
+	}
+	assert.Equal(t, baseFactory.Name(), "v1")
+	baseCasted := baseFactory.Cast(make([]byte, int(unsafe.Sizeof(sharedRegionT{}))))
+	if _, ok := baseCasted.(Spec); !ok {
+		t.Fatalf("expected Spec from base factory, got %T", baseCasted)
 	}
 }
 

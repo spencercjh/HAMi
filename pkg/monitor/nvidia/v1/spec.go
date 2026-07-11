@@ -85,6 +85,16 @@ type Spec struct {
 	sr *sharedRegionT
 }
 
+func clampProcCount(procnum int32, max int) int {
+	if procnum <= 0 {
+		return 0
+	}
+	if int(procnum) > max {
+		return max
+	}
+	return int(procnum)
+}
+
 func (s Spec) DeviceMax() int {
 	return maxDevices
 }
@@ -95,7 +105,7 @@ func (s Spec) DeviceNum() int {
 
 func (s Spec) DeviceMemoryContextSize(idx int) uint64 {
 	v := uint64(0)
-	for _, p := range s.sr.procs[:int(s.sr.procnum)] {
+	for _, p := range s.sr.procs[:clampProcCount(s.sr.procnum, len(s.sr.procs))] {
 		v += p.used[idx].contextSize
 	}
 	return v
@@ -103,7 +113,7 @@ func (s Spec) DeviceMemoryContextSize(idx int) uint64 {
 
 func (s Spec) DeviceMemoryModuleSize(idx int) uint64 {
 	v := uint64(0)
-	for _, p := range s.sr.procs[:int(s.sr.procnum)] {
+	for _, p := range s.sr.procs[:clampProcCount(s.sr.procnum, len(s.sr.procs))] {
 		v += p.used[idx].moduleSize
 	}
 	return v
@@ -111,7 +121,7 @@ func (s Spec) DeviceMemoryModuleSize(idx int) uint64 {
 
 func (s Spec) DeviceMemoryBufferSize(idx int) uint64 {
 	v := uint64(0)
-	for _, p := range s.sr.procs[:int(s.sr.procnum)] {
+	for _, p := range s.sr.procs[:clampProcCount(s.sr.procnum, len(s.sr.procs))] {
 		v += p.used[idx].bufferSize
 	}
 	return v
@@ -119,7 +129,7 @@ func (s Spec) DeviceMemoryBufferSize(idx int) uint64 {
 
 func (s Spec) DeviceMemoryOffset(idx int) uint64 {
 	v := uint64(0)
-	for _, p := range s.sr.procs[:int(s.sr.procnum)] {
+	for _, p := range s.sr.procs[:clampProcCount(s.sr.procnum, len(s.sr.procs))] {
 		v += p.used[idx].offset
 	}
 	return v
@@ -127,7 +137,7 @@ func (s Spec) DeviceMemoryOffset(idx int) uint64 {
 
 func (s Spec) DeviceMemoryTotal(idx int) uint64 {
 	v := uint64(0)
-	for _, p := range s.sr.procs[:int(s.sr.procnum)] {
+	for _, p := range s.sr.procs[:clampProcCount(s.sr.procnum, len(s.sr.procs))] {
 		v += p.used[idx].total
 	}
 	return v
@@ -135,7 +145,7 @@ func (s Spec) DeviceMemoryTotal(idx int) uint64 {
 
 func (s Spec) DeviceSmUtil(idx int) uint64 {
 	v := uint64(0)
-	for _, p := range s.sr.procs[:int(s.sr.procnum)] {
+	for _, p := range s.sr.procs[:clampProcCount(s.sr.procnum, len(s.sr.procs))] {
 		v += p.deviceUtil[idx].smUtil
 	}
 	return v
@@ -246,7 +256,7 @@ func (s SpecWithSemPostinit) DeviceNum() int {
 
 func (s SpecWithSemPostinit) DeviceMemoryContextSize(idx int) uint64 {
 	v := uint64(0)
-	for _, p := range s.sr.procs[:int(s.sr.procnum)] {
+	for _, p := range s.sr.procs[:clampProcCount(s.sr.procnum, len(s.sr.procs))] {
 		v += p.used[idx].contextSize
 	}
 	return v
@@ -254,7 +264,7 @@ func (s SpecWithSemPostinit) DeviceMemoryContextSize(idx int) uint64 {
 
 func (s SpecWithSemPostinit) DeviceMemoryModuleSize(idx int) uint64 {
 	v := uint64(0)
-	for _, p := range s.sr.procs[:int(s.sr.procnum)] {
+	for _, p := range s.sr.procs[:clampProcCount(s.sr.procnum, len(s.sr.procs))] {
 		v += p.used[idx].moduleSize
 	}
 	return v
@@ -262,7 +272,7 @@ func (s SpecWithSemPostinit) DeviceMemoryModuleSize(idx int) uint64 {
 
 func (s SpecWithSemPostinit) DeviceMemoryBufferSize(idx int) uint64 {
 	v := uint64(0)
-	for _, p := range s.sr.procs[:int(s.sr.procnum)] {
+	for _, p := range s.sr.procs[:clampProcCount(s.sr.procnum, len(s.sr.procs))] {
 		v += p.used[idx].bufferSize
 	}
 	return v
@@ -270,7 +280,7 @@ func (s SpecWithSemPostinit) DeviceMemoryBufferSize(idx int) uint64 {
 
 func (s SpecWithSemPostinit) DeviceMemoryOffset(idx int) uint64 {
 	v := uint64(0)
-	for _, p := range s.sr.procs[:int(s.sr.procnum)] {
+	for _, p := range s.sr.procs[:clampProcCount(s.sr.procnum, len(s.sr.procs))] {
 		v += p.used[idx].offset
 	}
 	return v
@@ -278,7 +288,7 @@ func (s SpecWithSemPostinit) DeviceMemoryOffset(idx int) uint64 {
 
 func (s SpecWithSemPostinit) DeviceMemoryTotal(idx int) uint64 {
 	v := uint64(0)
-	for _, p := range s.sr.procs[:int(s.sr.procnum)] {
+	for _, p := range s.sr.procs[:clampProcCount(s.sr.procnum, len(s.sr.procs))] {
 		v += p.used[idx].total
 	}
 	return v
@@ -286,7 +296,7 @@ func (s SpecWithSemPostinit) DeviceMemoryTotal(idx int) uint64 {
 
 func (s SpecWithSemPostinit) DeviceSmUtil(idx int) uint64 {
 	v := uint64(0)
-	for _, p := range s.sr.procs[:int(s.sr.procnum)] {
+	for _, p := range s.sr.procs[:clampProcCount(s.sr.procnum, len(s.sr.procs))] {
 		v += p.deviceUtil[idx].smUtil
 	}
 	return v

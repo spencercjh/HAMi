@@ -19,6 +19,9 @@ package v0
 import (
 	"reflect"
 	"testing"
+	"unsafe"
+
+	"github.com/Project-HAMi/HAMi/pkg/monitor/nvidia/api"
 )
 
 type specTest struct {
@@ -209,6 +212,27 @@ func TestSpec_DeviceMemoryOffset(t *testing.T) {
 				t.Errorf("DeviceMemoryOffset(%d) = %d, want %d", tt.input, actual, tt.expected)
 			}
 		})
+	}
+}
+
+func TestRegisterAndFactoryMatch(t *testing.T) {
+	Register()
+
+	got := api.FindFactory(&api.Header{MajorVersion: 0, MinorVersion: 0}, 1197897)
+	if got == nil {
+		t.Fatal("expected v0 factory, got nil")
+	}
+	if got.Name() != "v0" {
+		t.Fatalf("expected v0 factory, got %q", got.Name())
+	}
+
+	castedValue := got.Cast(make([]byte, int(unsafe.Sizeof(sharedRegionT{}))))
+	casted, ok := castedValue.(Spec)
+	if !ok {
+		t.Fatalf("expected Spec from v0 factory cast, got %T", castedValue)
+	}
+	if casted.sr == nil {
+		t.Fatal("expected casted spec to contain backing struct")
 	}
 }
 

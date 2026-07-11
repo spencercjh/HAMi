@@ -19,8 +19,6 @@ package nvidia
 import "testing"
 
 func TestFindFactory_RoutesByVersion(t *testing.T) {
-	ensureBuiltinsRegistered()
-
 	tests := []struct {
 		name     string
 		header   HeaderT
@@ -61,8 +59,6 @@ func TestFindFactory_RoutesByVersion(t *testing.T) {
 }
 
 func TestFindFactory_UnknownVersionReturnsNil(t *testing.T) {
-	ensureBuiltinsRegistered()
-
 	factory := findFactory(&HeaderT{MajorVersion: 9, MinorVersion: 9}, 1)
 	if factory != nil {
 		t.Fatalf("expected nil factory for unknown version, got %q", factory.Name())
