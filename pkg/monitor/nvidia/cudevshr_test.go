@@ -61,7 +61,7 @@ func (loadCacheFactory) Name() string              { return "load-cache-test" }
 func TestLoadCacheRoutesThroughRegisteredFactory(t *testing.T) {
 	t.Helper()
 
-	RegisterFactory(loadCacheFactory{})
+	api.RegisterFactory(loadCacheFactory{})
 
 	dir := t.TempDir()
 	cachePath := filepath.Join(dir, "custom.cache")
