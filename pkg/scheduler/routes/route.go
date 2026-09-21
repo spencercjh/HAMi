@@ -18,6 +18,7 @@ package routes
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -30,6 +31,7 @@ import (
 
 	"github.com/Project-HAMi/HAMi/pkg/device"
 	"github.com/Project-HAMi/HAMi/pkg/scheduler"
+	"github.com/Project-HAMi/HAMi/pkg/scheduler/feasibility"
 )
 
 const maxRequestSize = 1024 * 1024 // 1MB limit
@@ -58,6 +60,34 @@ func PredicateRoute(s *scheduler.Scheduler) httprouter.Handle {
 			return
 		}
 
+		raw, readErr := io.ReadAll(io.LimitReader(r.Body, maxRequestSize+1))
+		if readErr != nil || len(raw) > maxRequestSize {
+			http.Error(w, "filter request exceeds limit or cannot be read", http.StatusBadRequest)
+			return
+		}
+		var fields map[string]json.RawMessage
+		if json.Unmarshal(raw, &fields) == nil {
+			if _, present := fields["simulation"]; present {
+				var request feasibility.Request
+				result := feasibility.Result{}
+				err := json.Unmarshal(raw, &request)
+				if err == nil {
+					var filtered *extenderv1.ExtenderFilterResult
+					filtered, err = s.FilterFeasibility(request)
+					if err == nil {
+						result.ExtenderFilterResult = *filtered
+						result.Simulation = &feasibility.Ack{Version: feasibility.Version, Digest: fmt.Sprintf("%x", sha256.Sum256(raw))}
+					}
+				}
+				if err != nil {
+					result.Error = err.Error()
+				}
+				data, _ := json.Marshal(result)
+				writeResponse(w, http.StatusOK, data)
+				return
+			}
+		}
+		r.Body = io.NopCloser(bytes.NewReader(raw))
 		var buf bytes.Buffer
 		// Limit the body size to prevent deep nesting/resource exhaustion attacks
 		limitedReader := io.LimitReader(r.Body, maxRequestSize)

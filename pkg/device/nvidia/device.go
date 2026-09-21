@@ -1026,7 +1026,7 @@ func (nv *NvidiaGPUDevices) Fit(devices []*device.DeviceUsage, request device.Co
 			}
 			usedmem, usedcores = profile.MemoryMB, profile.Core
 		}
-		if !fitQuota(pod, tmpDevs, allocated, pod.Namespace, dev.ID, int64(usedmem), int64(usedcores)) {
+		if (nodeInfo == nil || !nodeInfo.NodeLocalEvaluation) && !fitQuota(pod, tmpDevs, allocated, pod.Namespace, dev.ID, int64(usedmem), int64(usedcores)) {
 			reason[common.ResourceQuotaNotFit]++
 			klog.V(3).InfoS(common.ResourceQuotaNotFit, "pod", pod.Name, "memreq", memreq, "coresreq", k.Coresreq)
 			continue
@@ -1244,4 +1244,38 @@ func computeBestCombination(nodeInfo *device.NodeInfo, combinations []device.Con
 		}
 	}
 	return bestCombination
+}
+
+// FeasibilityResourceNames identifies the resource inputs understood by the NVIDIA evaluator.
+func (dev *NvidiaGPUDevices) FeasibilityResourceNames() []string {
+	return []string{dev.config.ResourceCountName, dev.config.ResourceMemoryName, dev.config.ResourceMemoryPercentageName, dev.config.ResourceCoreName}
+}
+
+// ValidateFeasibilityRequest rejects demand that GenerateResourceRequests cannot
+// represent. Feasibility callers do not pass through the admission webhook.
+func (dev *NvidiaGPUDevices) ValidateFeasibilityRequest(ctr *corev1.Container) error {
+	present := false
+	for _, name := range dev.FeasibilityResourceNames() {
+		if name == "" {
+			continue
+		}
+		for _, resources := range []corev1.ResourceList{ctr.Resources.Limits, ctr.Resources.Requests} {
+			q, ok := resources[corev1.ResourceName(name)]
+			if !ok {
+				continue
+			}
+			present = true
+			n, integer := q.AsInt64()
+			if !integer || n < 0 {
+				return fmt.Errorf("invalid NVIDIA resource %s in container %s", name, ctr.Name)
+			}
+			if (name == dev.config.ResourceCoreName || name == dev.config.ResourceMemoryPercentageName) && n > 100 {
+				return fmt.Errorf("NVIDIA resource %s exceeds 100", name)
+			}
+		}
+	}
+	if present && dev.GenerateResourceRequests(ctr).Nums <= 0 {
+		return fmt.Errorf("NVIDIA demand in container %s cannot be represented", ctr.Name)
+	}
+	return nil
 }

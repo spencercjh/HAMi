@@ -189,9 +189,11 @@ func DeepCopyDeviceInfos(devices []DeviceInfo) []DeviceInfo {
 }
 
 type NodeInfo struct {
-	ID      string
-	Node    *corev1.Node
-	Devices map[string][]DeviceInfo
+	// NodeLocalEvaluation excludes live namespace quota from self-contained feasibility checks.
+	NodeLocalEvaluation bool
+	ID                  string
+	Node                *corev1.Node
+	Devices             map[string][]DeviceInfo
 }
 
 type ResourceNames struct {

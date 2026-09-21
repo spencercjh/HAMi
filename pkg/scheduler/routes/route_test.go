@@ -46,11 +46,10 @@ func TestMaxRequestSize(t *testing.T) {
 	handler(w, req, nil)
 	respBody := w.Body.String()
 
-	if !strings.Contains(respBody, "EOF") && !strings.Contains(respBody, "unexpected EOF") {
-		t.Errorf("LimitReader failed to trigger EOF. Response body: %s", respBody)
-	} else {
-		t.Logf("Success! Caught expected error: %s", respBody)
+	if w.Code != http.StatusBadRequest || !strings.Contains(respBody, "exceeds limit") {
+		t.Errorf("oversized filter request was not rejected: status=%d body=%s", w.Code, respBody)
 	}
+
 }
 
 func TestHealthzRoute(t *testing.T) {
