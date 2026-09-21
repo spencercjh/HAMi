@@ -75,8 +75,12 @@ func TestFeasibilityCumulativeOccupancy(t *testing.T) {
 func preserveResident(p *corev1.Pod, node, encoded string) feasibility.Resident {
 	p = p.DeepCopy()
 	p.Spec.NodeName = node
-	data, _ := json.Marshal(allocationRecord{Node: node, PodUID: p.UID, Devices: encoded})
-	return feasibility.Resident{Pod: p, Allocation: feasibility.Allocation{Mode: feasibility.Preserve, Encoding: allocationEncoding, Data: data}}
+	if p.Annotations == nil {
+		p.Annotations = make(map[string]string)
+	}
+	p.Annotations["hami.io/vgpu-node"] = node
+	p.Annotations["hami.io/vgpu-devices-allocated"] = encoded
+	return feasibility.Resident{Pod: p, Allocation: feasibility.Allocation{Mode: feasibility.Preserve}}
 }
 func TestFeasibilityPreservesFragmentationAndUserConstraints(t *testing.T) {
 	s, r := feasibilityFixture(t)
@@ -100,7 +104,7 @@ func TestFeasibilityPreservesFragmentationAndUserConstraints(t *testing.T) {
 	require.Empty(t, res.Nodes.Items)
 }
 func TestFeasibilityRejectsInvalidState(t *testing.T) {
-	for _, name := range []string{"missing", "version", "record", "device", "node", "demand", "constraint", "resource"} {
+	for _, name := range []string{"missing", "version", "record", "device", "node", "allocation node", "demand", "constraint", "resource"} {
 		t.Run(name, func(t *testing.T) {
 			s, r := feasibilityFixture(t)
 			r.Simulation.Nodes["node"] = []feasibility.Resident{preserveResident(feasibilityPod("resident", 18432), "node", "GPU-0,NVIDIA,18432,0:;")}
@@ -112,17 +116,17 @@ func TestFeasibilityRejectsInvalidState(t *testing.T) {
 			case "version":
 				r.Simulation.Version = "unknown"
 			case "record":
-				r.Simulation.Nodes["node"][0].Allocation.Data = nil
+				delete(r.Simulation.Nodes["node"][0].Pod.Annotations, "hami.io/vgpu-devices-allocated")
 			case "device":
 				r.Simulation.Nodes["node"][0] = preserveResident(feasibilityPod("resident", 18432), "node", "GPU-missing,NVIDIA,18432,0:;")
 			case "node":
 				r.Simulation.Nodes["node"][0].Pod.Spec.NodeName = "other"
+			case "allocation node":
+				r.Simulation.Nodes["node"][0].Pod.Annotations["hami.io/vgpu-node"] = "other"
 			case "demand":
 				r.Simulation.Nodes["node"][0] = preserveResident(feasibilityPod("resident", 18432), "node", "GPU-0,NVIDIA,1,0:;")
 			case "constraint":
-				r.Simulation.Nodes["node"][0].Pod.Annotations = map[string]string{nvidia.GPUUseUUID: "other"}
-			case "mig":
-				r.Nodes.Items[0].Annotations[nvidia.RegisterAnnos] = `[{"id":"GPU-0","count":10,"devmem":24576,"devcore":100,"type":"NVIDIA-T4","health":true,"mode":"mig"}]`
+				r.Simulation.Nodes["node"][0].Pod.Annotations[nvidia.GPUUseUUID] = "other"
 			}
 			_, err := s.FilterFeasibility(r)
 			require.Error(t, err)
@@ -239,4 +243,17 @@ func TestFeasibilityRejectsUnrepresentableDemand(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestFeasibilityPreserveUnrelatedResident(t *testing.T) {
+	s, r := feasibilityFixture(t)
+	plain := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "plain", UID: "plain"}, Spec: corev1.PodSpec{NodeName: "node", Containers: []corev1.Container{{Name: "app"}}}}
+	r.Simulation.Nodes["node"] = []feasibility.Resident{{Pod: plain, Allocation: feasibility.Allocation{Mode: feasibility.Preserve}}}
+	result, err := s.FilterFeasibility(r)
+	require.NoError(t, err)
+	require.Len(t, result.Nodes.Items, 1)
+	// A plain workload does not legitimize an inconsistent device record.
+	plain.Annotations = map[string]string{"hami.io/vgpu-node": "node", "hami.io/vgpu-devices-allocated": "GPU-0,NVIDIA,1024,0:;"}
+	_, err = s.FilterFeasibility(r)
+	require.Error(t, err)
 }

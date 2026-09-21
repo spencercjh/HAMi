@@ -17,12 +17,10 @@ limitations under the License.
 package scheduler
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 	extenderv1 "k8s.io/kube-scheduler/extender/v1"
 
 	"github.com/Project-HAMi/HAMi/pkg/device"
@@ -30,14 +28,6 @@ import (
 	"github.com/Project-HAMi/HAMi/pkg/scheduler/feasibility"
 	"github.com/Project-HAMi/HAMi/pkg/util"
 )
-
-const allocationEncoding = "hami.io/nvidia-allocation-v1"
-
-type allocationRecord struct {
-	Node    string    `json:"node"`
-	PodUID  types.UID `json:"podUID"`
-	Devices string    `json:"devices"`
-}
 
 // FilterFeasibility evaluates complete node-local occupancy without reading or
 // writing scheduling caches. Alpha support is limited to NVIDIA hami-core;
@@ -153,22 +143,29 @@ func freshFeasibilityPod(p *corev1.Pod) *corev1.Pod {
 	return copy
 }
 func (s *Scheduler) preserveFeasibility(usage *NodeUsage, resident feasibility.Resident) error {
-	var record allocationRecord
-	if resident.Allocation.Encoding != allocationEncoding {
-		return fmt.Errorf("unsupported allocation encoding")
+	if resident.Pod.Spec.NodeName != usage.Node.Name {
+		return fmt.Errorf("preserved Pod binding does not match target node")
 	}
-	if err := json.Unmarshal(resident.Allocation.Data, &record); err != nil {
-		return err
+	reqs := device.Resourcereqs(resident.Pod)
+	key := device.SupportDevices[nvidia.NvidiaGPUDevice]
+	record := resident.Pod.Annotations[key]
+	hasRequest := false
+	for _, requests := range reqs {
+		hasRequest = hasRequest || requests[nvidia.NvidiaGPUDevice].Nums > 0
 	}
-	if record.Node != usage.Node.Name || record.PodUID != resident.Pod.UID || resident.Pod.Spec.NodeName != record.Node || record.Devices == "" {
-		return fmt.Errorf("allocation identity mismatch")
+	// Unrelated residents carry full context but need no NVIDIA assignment.
+	// Stale allocation metadata on such a Pod is still checked, not discarded.
+	if !hasRequest && record == "" && resident.Pod.Annotations[nvidia.MigAllocationsAnnotation] == "" {
+		return nil
 	}
-	raw, err := device.DecodePodDevices(map[string]string{nvidia.NvidiaGPUDevice: "allocation"}, map[string]string{"allocation": record.Devices})
+	if record == "" || resident.Pod.Annotations[util.AssignedNodeAnnotations] != usage.Node.Name {
+		return fmt.Errorf("missing or inconsistent preserved NVIDIA allocation metadata")
+	}
+	raw, err := device.DecodePodDevices(map[string]string{nvidia.NvidiaGPUDevice: key}, resident.Pod.Annotations)
 	if err != nil {
 		return err
 	}
 	rows := raw[nvidia.NvidiaGPUDevice]
-	reqs := device.Resourcereqs(resident.Pod)
 	// The text encoding has one trailing semicolon, which decodes as an empty row.
 	if len(rows) == len(reqs)+1 && len(rows[len(rows)-1]) == 0 {
 		rows = rows[:len(rows)-1]
