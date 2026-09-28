@@ -717,11 +717,8 @@ devices:
     resourceVMemoryName: "kunlunxin.com/vxpu-memory"
     # devices.kunlun.enabled -- Whether to enable
     enabled: true
-    # devices.kunlun.customresources -- Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names.
-    customresources:
-      - kunlunxin.com/xpu
-      - kunlunxin.com/vxpu
-      - kunlunxin.com/vxpu-memory
+    # devices.kunlun.customresources -- Additional resource names forwarded to the scheduler extender; standard resources are added automatically from the named resource fields.
+    customresources: []
   enflame:
     # devices.enflame.resourceNameGCU -- Kubernetes extended-resource name for physical Enflame GCU count.
     resourceNameGCU: "enflame.com/gcu"
@@ -733,12 +730,8 @@ devices:
     resourceNameGCUCore: "enflame.com/gcu-core"
     # devices.enflame.enabled -- Enable this optional chart feature.
     enabled: true
-    # devices.enflame.customresources -- Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names.
-    customresources:
-      - enflame.com/drs-gcu
-      - enflame.com/gcu-memory
-      - enflame.com/gcu-core
-      - enflame.com/gcu
+    # devices.enflame.customresources -- Additional resource names forwarded to the scheduler extender; standard resources are added automatically from the named resource fields.
+    customresources: []
   mthreads:
     # devices.mthreads.enabled -- Whether to enable
     enabled: true
@@ -765,17 +758,15 @@ devices:
     resourceCountName: "vastaitech.com/va"
     # devices.vastai.enabled -- Enable this optional chart feature.
     enabled: true
-    # devices.vastai.customresources -- Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names.
-    customresources:
-      - vastaitech.com/va
+    # devices.vastai.customresources -- Additional resource names forwarded to the scheduler extender; standard resources are added automatically from the named resource fields.
+    customresources: []
   biren:
     # devices.biren.resourceCountName -- Kubernetes extended-resource name for device count.
     resourceCountName: "birentech.com/gpu"
     # devices.biren.enabled -- Enable this optional chart feature.
     enabled: true
-    # devices.biren.customresources -- Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names.
-    customresources:
-      - birentech.com/gpu
+    # devices.biren.customresources -- Additional resource names forwarded to the scheduler extender; standard resources are added automatically from the named resource fields.
+    customresources: []
   nvidia:
     # devices.nvidia.migProfileAllowlist -- Allowed MIG profiles by GPU model. Each entry contains models and profiles lists; an override replaces the complete default list.
     # @default -- See the complete list in [values.yaml](values.yaml).

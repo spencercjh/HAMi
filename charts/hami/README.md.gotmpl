@@ -32,11 +32,13 @@ chart defaults; lists replace the complete corresponding default list. Explicit
 Configuration precedence remains `device-config.content`, then a bundled
 `files/device-config.yaml`, then the configuration generated from values.
 `device-config.content` replaces the complete document and does not merge with
-`devices.*`. The `customresources` lists keep their existing defaults and
-behavior. For vendors whose extender resources use these lists, update them
-when changing runtime resource names or chip definitions. Changing the device
-configuration through Helm updates the scheduler and NVIDIA device-plugin
-checksum annotations.
+`devices.*`. For Enflame, Kunlun, Vastai, and Biren, the extender's standard
+resources follow the named device resource fields. Their `customresources`
+lists add extra resource names and default to `[]`; duplicate names within each
+vendor are removed. For other vendors whose extender resources use
+`customresources`, update those lists when changing resource names or chip
+definitions. Changing the device configuration through Helm updates the
+scheduler and NVIDIA device-plugin checksum annotations.
 
 ## Upgrade to v2.11
 
@@ -86,6 +88,12 @@ old field.
 Keep `scheduler.overwriteEnv` and other `devicePlugin` settings at their existing
 paths, including `enabled`, images, `deviceListStrategy`, `migStrategy`,
 `disablecorelimit`, and `nodeConfiguration`.
+
+For Enflame, Kunlun, Vastai, and Biren, standard extender resources are now
+added from the named device resource fields. Their `customresources` lists
+contain only additional resources and default to `[]`. Remove any copied
+standard-resource entries from these lists and keep the extra resources you
+need. Standard resources are included even when `customresources` is empty.
 
 ### Back up the current configuration
 

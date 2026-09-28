@@ -32,11 +32,13 @@ chart defaults; lists replace the complete corresponding default list. Explicit
 Configuration precedence remains `device-config.content`, then a bundled
 `files/device-config.yaml`, then the configuration generated from values.
 `device-config.content` replaces the complete document and does not merge with
-`devices.*`. The `customresources` lists keep their existing defaults and
-behavior. For vendors whose extender resources use these lists, update them
-when changing runtime resource names or chip definitions. Changing the device
-configuration through Helm updates the scheduler and NVIDIA device-plugin
-checksum annotations.
+`devices.*`. For Enflame, Kunlun, Vastai, and Biren, the extender's standard
+resources follow the named device resource fields. Their `customresources`
+lists add extra resource names and default to `[]`; duplicate names within each
+vendor are removed. For other vendors whose extender resources use
+`customresources`, update those lists when changing resource names or chip
+definitions. Changing the device configuration through Helm updates the
+scheduler and NVIDIA device-plugin checksum annotations.
 
 ## Upgrade to v2.11
 
@@ -86,6 +88,12 @@ old field.
 Keep `scheduler.overwriteEnv` and other `devicePlugin` settings at their existing
 paths, including `enabled`, images, `deviceListStrategy`, `migStrategy`,
 `disablecorelimit`, and `nodeConfiguration`.
+
+For Enflame, Kunlun, Vastai, and Biren, standard extender resources are now
+added from the named device resource fields. Their `customresources` lists
+contain only additional resources and default to `[]`. Remove any copied
+standard-resource entries from these lists and keep the extra resources you
+need. Standard resources are included even when `customresources` is empty.
 
 ### Back up the current configuration
 
@@ -230,13 +238,13 @@ kubectl rollout status daemonset/hami-device-plugin -n kube-system
 | devices.awsneuron.customresources | list | `["aws.amazon.com/neuron","aws.amazon.com/neuroncore"]` | Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names. |
 | devices.awsneuron.resourceCoreName | string | `"aws.amazon.com/neuroncore"` | Kubernetes extended-resource name for device cores. |
 | devices.awsneuron.resourceCountName | string | `"aws.amazon.com/neuron"` | Kubernetes extended-resource name for device count. |
-| devices.biren.customresources | list | `["birentech.com/gpu"]` | Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names. |
+| devices.biren.customresources | list | `[]` | Additional resource names forwarded to the scheduler extender; standard resources are added automatically from the named resource fields. |
 | devices.biren.enabled | bool | `true` | Enable this optional chart feature. |
 | devices.biren.resourceCountName | string | `"birentech.com/gpu"` | Kubernetes extended-resource name for device count. |
 | devices.cambricon.resourceCoreName | string | `"cambricon.com/mlu.smlu.vcore"` | Kubernetes extended-resource name for device cores. |
 | devices.cambricon.resourceCountName | string | `"cambricon.com/vmlu"` | Kubernetes extended-resource name for device count. |
 | devices.cambricon.resourceMemoryName | string | `"cambricon.com/mlu.smlu.vmemory"` | Kubernetes extended-resource name for device memory. |
-| devices.enflame.customresources | list | `["enflame.com/drs-gcu","enflame.com/gcu-memory","enflame.com/gcu-core","enflame.com/gcu"]` | Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names. |
+| devices.enflame.customresources | list | `[]` | Additional resource names forwarded to the scheduler extender; standard resources are added automatically from the named resource fields. |
 | devices.enflame.enabled | bool | `true` | Enable this optional chart feature. |
 | devices.enflame.resourceNameDRSGCU | string | `"enflame.com/drs-gcu"` | Kubernetes extended-resource name for Enflame DRS GCU count. |
 | devices.enflame.resourceNameGCU | string | `"enflame.com/gcu"` | Kubernetes extended-resource name for physical Enflame GCU count. |
@@ -249,7 +257,7 @@ kubectl rollout status daemonset/hami-device-plugin -n kube-system
 | devices.iluvatar.configs | list | See the complete list in [values.yaml](values.yaml). | Iluvatar chip configurations with chipName, commonWord and resource names; an override replaces the complete default chip list. |
 | devices.iluvatar.customresources | list | `["iluvatar.ai/BI-V100-vgpu","iluvatar.ai/BI-V100.vCore","iluvatar.ai/BI-V100.vMem","iluvatar.ai/BI-V150-vgpu","iluvatar.ai/BI-V150.vCore","iluvatar.ai/BI-V150.vMem","iluvatar.ai/MR-V100-vgpu","iluvatar.ai/MR-V100.vCore","iluvatar.ai/MR-V100.vMem","iluvatar.ai/MR-V50-vgpu","iluvatar.ai/MR-V50.vCore","iluvatar.ai/MR-V50.vMem"]` | Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names. |
 | devices.iluvatar.enabled | bool | `false` | Enable Iluvatar handling in the scheduler and its extender resource list. |
-| devices.kunlun.customresources | list | `["kunlunxin.com/xpu","kunlunxin.com/vxpu","kunlunxin.com/vxpu-memory"]` | Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names. |
+| devices.kunlun.customresources | list | `[]` | Additional resource names forwarded to the scheduler extender; standard resources are added automatically from the named resource fields. |
 | devices.kunlun.enabled | bool | `true` | Whether to enable |
 | devices.kunlun.resourceCountName | string | `"kunlunxin.com/xpu"` | Kubernetes extended-resource name for device count. |
 | devices.kunlun.resourceVCountName | string | `"kunlunxin.com/vxpu"` | Kubernetes extended-resource name for virtual-device count. |
@@ -298,7 +306,7 @@ kubectl rollout status daemonset/hami-device-plugin -n kube-system
 | devices.remotegpu.server.runtimeClassName | string | `""` | RuntimeClass selecting the NVIDIA container runtime for the chart-managed lupine server. |
 | devices.remotegpu.server.tolerations | list | `[]` | Kubernetes Pod tolerations for node taints. |
 | devices.remotegpu.sessionImage | string | `""` | Image for server session relay Pods; empty disables session relays. The image must provide socat. |
-| devices.vastai.customresources | list | `["vastaitech.com/va"]` | Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names. |
+| devices.vastai.customresources | list | `[]` | Additional resource names forwarded to the scheduler extender; standard resources are added automatically from the named resource fields. |
 | devices.vastai.enabled | bool | `true` | Enable this optional chart feature. |
 | devices.vastai.resourceCountName | string | `"vastaitech.com/va"` | Kubernetes extended-resource name for device count. |
 | fullnameOverride | string | `""` | Override the complete release resource-name prefix. |
