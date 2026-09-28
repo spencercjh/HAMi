@@ -694,15 +694,20 @@ devices:
     resourceMemoryName: "amd.com/gpumem"
     # devices.amd.resourceCoreName -- Kubernetes extended-resource name for device cores.
     resourceCoreName: "amd.com/gpucores"
-    # devices.amd.customresources -- Additional resource names forwarded to the extender beyond those derived from config; duplicates are removed.
-    customresources: []
+    # devices.amd.customresources -- Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names.
+    customresources:
+      - amd.com/gpu
+      - amd.com/gpumem
+      - amd.com/gpucores
   awsneuron:
     # devices.awsneuron.resourceCountName -- Kubernetes extended-resource name for device count.
     resourceCountName: "aws.amazon.com/neuron"
     # devices.awsneuron.resourceCoreName -- Kubernetes extended-resource name for device cores.
     resourceCoreName: "aws.amazon.com/neuroncore"
-    # devices.awsneuron.customresources -- Additional resource names forwarded to the extender beyond those derived from config; duplicates are removed.
-    customresources: []
+    # devices.awsneuron.customresources -- Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names.
+    customresources:
+      - aws.amazon.com/neuron
+      - aws.amazon.com/neuroncore
   kunlun:
     # devices.kunlun.resourceCountName -- Kubernetes extended-resource name for device count.
     resourceCountName: "kunlunxin.com/xpu"
@@ -712,8 +717,11 @@ devices:
     resourceVMemoryName: "kunlunxin.com/vxpu-memory"
     # devices.kunlun.enabled -- Whether to enable
     enabled: true
-    # devices.kunlun.customresources -- Additional resource names forwarded to the extender beyond those derived from config; duplicates are removed.
-    customresources: []
+    # devices.kunlun.customresources -- Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names.
+    customresources:
+      - kunlunxin.com/xpu
+      - kunlunxin.com/vxpu
+      - kunlunxin.com/vxpu-memory
   enflame:
     # devices.enflame.resourceNameGCU -- Kubernetes extended-resource name for physical Enflame GCU count.
     resourceNameGCU: "enflame.com/gcu"
@@ -725,13 +733,18 @@ devices:
     resourceNameGCUCore: "enflame.com/gcu-core"
     # devices.enflame.enabled -- Enable this optional chart feature.
     enabled: true
-    # devices.enflame.customresources -- Additional resource names forwarded to the extender beyond those derived from config; duplicates are removed.
-    customresources: []
+    # devices.enflame.customresources -- Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names.
+    customresources:
+      - enflame.com/drs-gcu
+      - enflame.com/gcu-memory
+      - enflame.com/gcu-core
+      - enflame.com/gcu
   mthreads:
     # devices.mthreads.enabled -- Whether to enable
     enabled: true
-    # devices.mthreads.customresources -- Additional resource names forwarded to the extender beyond those derived from config; duplicates are removed.
-    customresources: []
+    # devices.mthreads.customresources -- Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names.
+    customresources:
+      - mthreads.com/vgpu
     # devices.mthreads.resourceCountName -- Kubernetes extended-resource name for device count.
     resourceCountName: "mthreads.com/vgpu"
     # devices.mthreads.resourceMemoryName -- Kubernetes extended-resource name for device memory.
@@ -752,15 +765,17 @@ devices:
     resourceCountName: "vastaitech.com/va"
     # devices.vastai.enabled -- Enable this optional chart feature.
     enabled: true
-    # devices.vastai.customresources -- Additional resource names forwarded to the extender beyond those derived from config; duplicates are removed.
-    customresources: []
+    # devices.vastai.customresources -- Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names.
+    customresources:
+      - vastaitech.com/va
   biren:
     # devices.biren.resourceCountName -- Kubernetes extended-resource name for device count.
     resourceCountName: "birentech.com/gpu"
     # devices.biren.enabled -- Enable this optional chart feature.
     enabled: true
-    # devices.biren.customresources -- Additional resource names forwarded to the extender beyond those derived from config; duplicates are removed.
-    customresources: []
+    # devices.biren.customresources -- Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names.
+    customresources:
+      - birentech.com/gpu
   nvidia:
     # devices.nvidia.migProfileAllowlist -- Allowed MIG profiles by GPU model. Each entry contains models and profiles lists; an override replaces the complete default list.
     # @default -- See the complete list in [values.yaml](values.yaml).
@@ -1046,8 +1061,29 @@ devices:
       ascend: "on"
     # devices.ascend.tolerations -- Ascend device-plugin tolerations; unused by the current chart templates.
     tolerations: []
-    # devices.ascend.customresources -- Additional resource names forwarded to the extender beyond those derived from config; duplicates are removed.
-    customresources: []
+    # devices.ascend.customresources -- Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names.
+    customresources:
+      - huawei.com/Ascend910A
+      - huawei.com/Ascend910A-memory
+      - huawei.com/Ascend910A-core
+      - huawei.com/Ascend910B2
+      - huawei.com/Ascend910B2-memory
+      - huawei.com/Ascend910B2-core
+      - huawei.com/Ascend910B3
+      - huawei.com/Ascend910B3-memory
+      - huawei.com/Ascend910B3-core
+      - huawei.com/Ascend910B4
+      - huawei.com/Ascend910B4-memory
+      - huawei.com/Ascend910B4-core
+      - huawei.com/Ascend910B4-1
+      - huawei.com/Ascend910B4-1-memory
+      - huawei.com/Ascend910B4-1-core
+      - huawei.com/Ascend310P
+      - huawei.com/Ascend310P-memory
+      - huawei.com/Ascend310P-core
+      - huawei.com/Ascend910C
+      - huawei.com/Ascend910C-memory
+      - huawei.com/Ascend910C-core
   iluvatar:
     # devices.iluvatar.configs -- Iluvatar chip configurations with chipName, commonWord and resource names; an override replaces the complete default chip list.
     # @default -- See the complete list in [values.yaml](values.yaml).
@@ -1074,8 +1110,20 @@ devices:
         resourceCoreName: iluvatar.ai/BI-V100.vCore
     # devices.iluvatar.enabled -- Enable Iluvatar handling in the scheduler and its extender resource list.
     enabled: false
-    # devices.iluvatar.customresources -- Additional resource names forwarded to the extender beyond those derived from config; duplicates are removed.
-    customresources: []
+    # devices.iluvatar.customresources -- Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names.
+    customresources:
+      - iluvatar.ai/BI-V100-vgpu
+      - iluvatar.ai/BI-V100.vCore
+      - iluvatar.ai/BI-V100.vMem
+      - iluvatar.ai/BI-V150-vgpu
+      - iluvatar.ai/BI-V150.vCore
+      - iluvatar.ai/BI-V150.vMem
+      - iluvatar.ai/MR-V100-vgpu
+      - iluvatar.ai/MR-V100.vCore
+      - iluvatar.ai/MR-V100.vMem
+      - iluvatar.ai/MR-V50-vgpu
+      - iluvatar.ai/MR-V50.vCore
+      - iluvatar.ai/MR-V50.vMem
 
 # legacyMetrics -- Expose legacy metric names alongside the current scheduler and vGPU monitor metrics.
 legacyMetrics: false
@@ -1084,8 +1132,8 @@ prometheus:
   # prometheus.enabled -- Render Prometheus Operator ServiceMonitor resources; requires the ServiceMonitor CRD.
   enabled: false
 
-# Full replacement of device-config.yaml. Leave empty to render devices.*.
+# Full replacement of device-config.yaml; takes precedence over a bundled file and values.
 # This is a complete document, not a merge; prefer devices.<vendor> fields for partial overrides.
 device-config:
-  # device-config.content -- Complete device-config.yaml replacement. Empty renders devices.*; non-empty content does not merge with the structured defaults.
+  # device-config.content -- Complete device-config.yaml replacement, taking precedence over a bundled files/device-config.yaml and values. Non-empty content does not merge with the structured defaults.
   content: ""
