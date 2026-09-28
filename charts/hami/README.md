@@ -149,7 +149,7 @@ and NVIDIA device-plugin checksum annotations.
 | devices.metax.sgpuTopologyAware | bool | `false` | Enable Metax sGPU topology-aware allocation. |
 | devices.mthreads.customresources | list | `[]` | Additional resource names forwarded to the extender beyond those derived from config; duplicates are removed. |
 | devices.mthreads.enabled | bool | `true` | Whether to enable |
-| devices.mthreads.memoryPerCard | list | `[96]` | Memory units of 512 MiB per MThreads card model; list every model in mixed fleets. 96 represents 48 GiB and 160 represents 80 GiB. |
+| devices.mthreads.memoryPerCard | list | `[96]` | List of integer memory units of 512 MiB per MThreads card model; list every model in mixed fleets. 96 represents 48 GiB and 160 represents 80 GiB. Scalar values are rejected. |
 | devices.mthreads.resourceCoreName | string | `"mthreads.com/sgpu-core"` | Kubernetes extended-resource name for device cores. |
 | devices.mthreads.resourceCountName | string | `"mthreads.com/vgpu"` | Kubernetes extended-resource name for device count. |
 | devices.mthreads.resourceMemoryName | string | `"mthreads.com/sgpu-memory"` | Kubernetes extended-resource name for device memory. |
