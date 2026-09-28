@@ -151,7 +151,7 @@ checksum annotations.
 | devices.metax.sgpuTopologyAware | bool | `false` | Enable Metax sGPU topology-aware allocation. |
 | devices.mthreads.customresources | list | `["mthreads.com/vgpu"]` | Resource names forwarded to the scheduler extender for this vendor; update this list when changing its runtime resource names. |
 | devices.mthreads.enabled | bool | `true` | Whether to enable |
-| devices.mthreads.memoryPerCard | list | `[96]` | List of integer memory units of 512 MiB per MThreads card model; list every model in mixed fleets. 96 represents 48 GiB and 160 represents 80 GiB. Scalar values are rejected. |
+| devices.mthreads.memoryPerCard | list | `[96]` | List of integer memory units of 512 MiB per MThreads card model; list every model in mixed fleets. 96 represents 48 GiB and 160 represents 80 GiB. |
 | devices.mthreads.resourceCoreName | string | `"mthreads.com/sgpu-core"` | Kubernetes extended-resource name for device cores. |
 | devices.mthreads.resourceCountName | string | `"mthreads.com/vgpu"` | Kubernetes extended-resource name for device count. |
 | devices.mthreads.resourceMemoryName | string | `"mthreads.com/sgpu-memory"` | Kubernetes extended-resource name for device memory. |
