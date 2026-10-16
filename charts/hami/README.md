@@ -338,8 +338,8 @@ lists when changing resource names or chip definitions.
 
 ## Values
 
-Values with helm-docs descriptions are listed in the same order as in
-[values.yaml](values.yaml).
+Values are listed in the same order as in [values.yaml](values.yaml).
+Fields marked with `@ignored` are omitted.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
@@ -499,10 +499,43 @@ Values with helm-docs descriptions are listed in the same order as in
 | mockDevicePlugin.image.repository | string | `"projecthami/mock-device-plugin"` | Image repository for the mock-device-plugin. |
 | mockDevicePlugin.image.tag | string | `"1.0.1@sha256:61d08a5641251ed776e4701c0dcf05c2c2bed5a58b39b8a11ec85ca5e57e674a"` | Image tag (required), pinned by digest; does not inherit `global.imageTag`. |
 | mockDevicePlugin.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy: `Always`, `IfNotPresent`, or `Never`. |
+| devices.metax.resourceCountName | string | `"metax-tech.com/gpu"` |  |
+| devices.metax.resourceVCountName | string | `"metax-tech.com/sgpu"` |  |
+| devices.metax.resourceVCoreName | string | `"metax-tech.com/vcore"` |  |
+| devices.metax.resourceVMemoryName | string | `"metax-tech.com/vmemory"` |  |
+| devices.metax.sgpuTopologyAware | bool | `false` |  |
+| devices.hygon.memoryFactor | int | `1` |  |
+| devices.hygon.resourceCountName | string | `"hygon.com/hcunum"` |  |
+| devices.hygon.resourceMemoryName | string | `"hygon.com/hcumem"` |  |
+| devices.hygon.resourceCoreName | string | `"hygon.com/hcucores"` |  |
 | devices.cambricon.resourceCountName | string | `"cambricon.com/vmlu"` | Resource name for the number of MLUs a container requests; it must match the Cambricon device plugin. A zero count requests no device; HAMi reads memory and core requests only for a positive count. Sharing needs one MLU and the plugin in `dynamic-smlu` mode; a count above 1 allocates whole MLUs and ignores the memory and core values. A non-empty `device-config.content` or a bundled `files/device-config.yaml` replaces the generated device configuration, so set the name there too. |
 | devices.cambricon.resourceMemoryName | string | `"cambricon.com/mlu.smlu.vmemory"` | Resource name for MLU memory, requested in integer units of 256 MiB (`20` is 5120 MiB); run the plugin with `min-dsmlu-unit=256`. Omitted or 0 reserves the whole MLU memory. Set the name in `device-config.content` or `files/device-config.yaml` too when either replaces the generated configuration. |
 | devices.cambricon.resourceCoreName | string | `"cambricon.com/mlu.smlu.vcore"` | Resource name for MLU compute, requested as an integer percentage from 0 to 100; omitted requests 100. Set the name in `device-config.content` or `files/device-config.yaml` too when either replaces the generated configuration. |
+| devices.amd.resourceCountName | string | `"amd.com/gpu"` |  |
+| devices.amd.resourceMemoryName | string | `"amd.com/gpumem"` |  |
+| devices.amd.resourceMemoryPercentageName | string | `"amd.com/gpumem-percentage"` |  |
+| devices.amd.resourceCoreName | string | `"amd.com/gpucores"` |  |
+| devices.amd.runtimeClassName | string | `""` |  |
+| devices.amd.defaultGPUNum | int | `1` |  |
+| devices.amd.defaultMemory | int | `0` |  |
+| devices.amd.defaultCores | int | `0` |  |
+| devices.amd.customresources[0] | string | `"amd.com/gpu"` |  |
+| devices.amd.customresources[1] | string | `"amd.com/gpumem"` |  |
+| devices.amd.customresources[2] | string | `"amd.com/gpucores"` |  |
+| devices.awsneuron.resourceCountName | string | `"aws.amazon.com/neuron"` |  |
+| devices.awsneuron.resourceCoreName | string | `"aws.amazon.com/neuroncore"` |  |
+| devices.awsneuron.customresources[0] | string | `"aws.amazon.com/neuron"` |  |
+| devices.awsneuron.customresources[1] | string | `"aws.amazon.com/neuroncore"` |  |
+| devices.kunlun.resourceCountName | string | `"kunlunxin.com/xpu"` |  |
+| devices.kunlun.resourceVCountName | string | `"kunlunxin.com/vxpu"` |  |
+| devices.kunlun.resourceVMemoryName | string | `"kunlunxin.com/vxpu-memory"` |  |
+| devices.kunlun.enabled | bool | `true` |  |
 | devices.kunlun.customresources | list | `[]` | Additional resource names forwarded to the scheduler extender; standard resources are added automatically from the named resource fields. |
+| devices.enflame.resourceNameGCU | string | `"enflame.com/gcu"` |  |
+| devices.enflame.resourceNameDRSGCU | string | `"enflame.com/drs-gcu"` |  |
+| devices.enflame.resourceNameGCUMemory | string | `"enflame.com/gcu-memory"` |  |
+| devices.enflame.resourceNameGCUCore | string | `"enflame.com/gcu-core"` |  |
+| devices.enflame.enabled | bool | `true` |  |
 | devices.enflame.customresources | list | `[]` | Additional resource names forwarded to the scheduler extender; standard resources are added automatically from the named resource fields. |
 | devices.mthreads.enabled | bool | `true` | Register customresources with the HAMi scheduler extender. The MThreads toolkit must be installed separately. |
 | devices.mthreads.customresources | list | `["mthreads.com/vgpu"]` | Resource names managed by the scheduler extender when enabled. Include resourceCountName; it is not added automatically. |
@@ -510,7 +543,11 @@ Values with helm-docs descriptions are listed in the same order as in
 | devices.mthreads.resourceMemoryName | string | `"mthreads.com/sgpu-memory"` | Resource name for sGPU memory requests in integer units of 512 MiB (32 = 16 GiB). When memory is not requested, HAMi uses the selected node's per-card capacity. |
 | devices.mthreads.resourceCoreName | string | `"mthreads.com/sgpu-core"` | Resource name for integer sGPU time-sharing weight requests. HAMi accounts for 16 units per card: a single-card request of 8 consumes 8/16 of its allocatable compute units. Device sharing for multi-cards is not supported. For multi-card requests, HAMi overwrites the compute request with 16 units per card. Actual GPU time depends on the vendor scheduling policy and competing workloads. |
 | devices.mthreads.memoryPerCard | list | `[96]` | Per-card capacities in 512 MiB units used to validate explicit single-device memory limits, not to set node capacity. 96 = MTT S4000 (48 GiB); 160 = MTT S5000 (80 GiB). Use [96, 160] for mixed fleets. Allowed limits are the union of powers of two starting at 2 and each full-card capacity. An empty list falls back to [96]; a legacy scalar is converted to a one-item list. |
+| devices.vastai.resourceCountName | string | `"vastaitech.com/va"` |  |
+| devices.vastai.enabled | bool | `true` |  |
 | devices.vastai.customresources | list | `[]` | Additional resource names forwarded to the scheduler extender; standard resources are added automatically from the named resource fields. |
+| devices.biren.resourceCountName | string | `"birentech.com/gpu"` |  |
+| devices.biren.enabled | bool | `true` |  |
 | devices.biren.customresources | list | `[]` | Additional resource names forwarded to the scheduler extender; standard resources are added automatically from the named resource fields. |
 | devices.nvidia.adoptExistingMIGInstances | bool | `false` | In the `mig` operating mode, let the device plugin adopt, when it starts, MIG instances HAMi has no record of creating, so it can reuse or destroy them. When false, they are left untouched. Enable it only when HAMi alone manages the MIG layout of the node. |
 | devices.nvidia.migProfileAllowlist | list | Profiles for A30, A100, H100, H20, GH200, H200, B200, and RTX PRO 6000 Blackwell Server Edition | MIG profiles HAMi may create on nodes whose device plugin runs in the `mig` operating mode. Each entry has `models`, a list of GPU model names matched as substrings of the name NVML reports, and `profiles`, a list of MIG profile names such as `1g.10gb`, for example `{models: ["A30"], profiles: ["1g.6gb", "2g.12gb"]}`. The first entry that matches a GPU's model decides the profiles for that GPU; a GPU that no entry matches is not registered. The `nvidia.com/mig-profile-preference` Pod annotation accepts only listed profiles or their slice prefix, such as `4g`. The scheduler and device plugin fail to start if an entry has empty `models` or `profiles`, or if a profile name has no `.` or its part before the first `.` is not at least two characters ending in `g`. The part after the `.` is not checked. A profile that passes this check but names a slice count the GPU does not support, such as `5g.20gb`, is skipped on the node. Setting this value replaces the whole default list. |
@@ -533,9 +570,222 @@ Values with helm-docs descriptions are listed in the same order as in
 | devices.nvidia.gpuCorePolicy | string | `"default"` | How HAMi-core enforces the `resourceCoreName` limit. The admission webhook passes values other than `default` as `GPU_CORE_UTILIZATION_POLICY`. `default` lets vGPUmonitor turn enforcement on only while it sees other active tasks of the same or higher priority on the GPU. `force` always enforces it. `disable` never enforces it. HAMi-core treats any other value as `default`. Limits of 0 and 100 are never enforced. |
 | devices.nvidia.libCudaLogLevel | int | `1` | HAMi-core log level, passed to containers as `LIBCUDA_LOG_LEVEL`. Errors are always logged. `0` and `1` log errors only, `2` adds warnings and messages, `3` adds info, and `4` adds debug logs. HAMi-core itself defaults to `2` when the variable is unset. Not applied in the `mig` operating mode. A device-plugin `nodeconfig` entry can override it per node with `libcudaloglevel`. |
 | devices.nvidia.limitDelivery | string | `"file"` | How the device plugin passes a container's GPU limits to HAMi-core. `file` sets the limit environment variables and also mounts the limits read-only at `/overrideEnv`, so HAMi-core can apply them to processes started without the container's environment, such as from SSH, `su -`, `sudo` or cron. `env` sets the environment variables only. A device-plugin `nodeconfig` entry can override it per node with `limitdelivery`, and a Pod with the `hami.io/limit-delivery` annotation. An unknown value is ignored, and `file` is used when no valid value is set. Not applied in the `mig` operating mode. |
+| devices.remotegpu.enabled | bool | `false` |  |
+| devices.remotegpu.defaultPort | int | `14833` |  |
+| devices.remotegpu.resourceCountName | string | `"nvidia.com/remote-gpu"` |  |
+| devices.remotegpu.resourceMemoryName | string | `"nvidia.com/remote-gpu-memory"` |  |
 | devices.remotegpu.libImage | string | `nil` | HAMi-core image for remote GPU memory enforcement; unset uses the device plugin image, empty disables enforcement. An init container copies HAMi-core into the client Pod. A client node runs no device plugin, so nothing else would deliver it. Leave it unset for the device plugin image. Set it to "" to schedule remote GPUs without enforcement. |
 | devices.remotegpu.clientImage | string | `"ghcr.io/lupinemachines/lupine-client:cuda-13.3.1-ubuntu24.04"` | Client image used to deliver Lupine libraries and libnghttp2 for the CUDA/vLLM examples; empty disables delivery. Match the server version and workload ABI; an empty string disables delivery. |
+| devices.remotegpu.sessionImage | string | `""` |  |
+| devices.remotegpu.server.enabled | bool | `true` |  |
+| devices.remotegpu.server.image.registry | string | `"ghcr.io"` |  |
+| devices.remotegpu.server.image.repository | string | `"lupinemachines/lupine-server"` |  |
+| devices.remotegpu.server.image.tag | string | `"cuda-13.3.1-ubuntu24.04"` |  |
+| devices.remotegpu.server.image.pullPolicy | string | `"IfNotPresent"` |  |
+| devices.remotegpu.server.runtimeClassName | string | `""` |  |
+| devices.remotegpu.server.tolerations | list | `[]` |  |
+| devices.remotegpu.server.resources | object | `{}` |  |
+| devices.ascend.configs[0].chipName | string | `"910A"` |  |
+| devices.ascend.configs[0].commonWord | string | `"Ascend910A"` |  |
+| devices.ascend.configs[0].resourceName | string | `"huawei.com/Ascend910A"` |  |
+| devices.ascend.configs[0].resourceMemoryName | string | `"huawei.com/Ascend910A-memory"` |  |
+| devices.ascend.configs[0].resourceCoreName | string | `"huawei.com/Ascend910A-core"` |  |
+| devices.ascend.configs[0].memoryAllocatable | int | `32768` |  |
+| devices.ascend.configs[0].memoryCapacity | int | `32768` |  |
+| devices.ascend.configs[0].memoryFactor | int | `1` |  |
+| devices.ascend.configs[0].aiCore | int | `30` |  |
+| devices.ascend.configs[0].templates[0].name | string | `"vir02"` |  |
+| devices.ascend.configs[0].templates[0].memory | int | `2184` |  |
+| devices.ascend.configs[0].templates[0].aiCore | int | `2` |  |
+| devices.ascend.configs[0].templates[1].name | string | `"vir04"` |  |
+| devices.ascend.configs[0].templates[1].memory | int | `4369` |  |
+| devices.ascend.configs[0].templates[1].aiCore | int | `4` |  |
+| devices.ascend.configs[0].templates[2].name | string | `"vir08"` |  |
+| devices.ascend.configs[0].templates[2].memory | int | `8738` |  |
+| devices.ascend.configs[0].templates[2].aiCore | int | `8` |  |
+| devices.ascend.configs[0].templates[3].name | string | `"vir16"` |  |
+| devices.ascend.configs[0].templates[3].memory | int | `17476` |  |
+| devices.ascend.configs[0].templates[3].aiCore | int | `16` |  |
+| devices.ascend.configs[1].chipName | string | `"910B2"` |  |
+| devices.ascend.configs[1].commonWord | string | `"Ascend910B2"` |  |
+| devices.ascend.configs[1].resourceName | string | `"huawei.com/Ascend910B2"` |  |
+| devices.ascend.configs[1].resourceMemoryName | string | `"huawei.com/Ascend910B2-memory"` |  |
+| devices.ascend.configs[1].resourceCoreName | string | `"huawei.com/Ascend910B2-core"` |  |
+| devices.ascend.configs[1].memoryAllocatable | int | `65536` |  |
+| devices.ascend.configs[1].memoryCapacity | int | `65536` |  |
+| devices.ascend.configs[1].memoryFactor | int | `1` |  |
+| devices.ascend.configs[1].aiCore | int | `24` |  |
+| devices.ascend.configs[1].aiCPU | int | `6` |  |
+| devices.ascend.configs[1].templates[0].name | string | `"vir03_1c_8g"` |  |
+| devices.ascend.configs[1].templates[0].memory | int | `8192` |  |
+| devices.ascend.configs[1].templates[0].aiCore | int | `3` |  |
+| devices.ascend.configs[1].templates[0].aiCPU | int | `1` |  |
+| devices.ascend.configs[1].templates[1].name | string | `"vir06_1c_16g"` |  |
+| devices.ascend.configs[1].templates[1].memory | int | `16384` |  |
+| devices.ascend.configs[1].templates[1].aiCore | int | `6` |  |
+| devices.ascend.configs[1].templates[1].aiCPU | int | `1` |  |
+| devices.ascend.configs[1].templates[2].name | string | `"vir12_3c_32g"` |  |
+| devices.ascend.configs[1].templates[2].memory | int | `32768` |  |
+| devices.ascend.configs[1].templates[2].aiCore | int | `12` |  |
+| devices.ascend.configs[1].templates[2].aiCPU | int | `3` |  |
+| devices.ascend.configs[2].chipName | string | `"910B3"` |  |
+| devices.ascend.configs[2].commonWord | string | `"Ascend910B3"` |  |
+| devices.ascend.configs[2].resourceName | string | `"huawei.com/Ascend910B3"` |  |
+| devices.ascend.configs[2].resourceMemoryName | string | `"huawei.com/Ascend910B3-memory"` |  |
+| devices.ascend.configs[2].resourceCoreName | string | `"huawei.com/Ascend910B3-core"` |  |
+| devices.ascend.configs[2].memoryAllocatable | int | `65536` |  |
+| devices.ascend.configs[2].memoryCapacity | int | `65536` |  |
+| devices.ascend.configs[2].memoryFactor | int | `1` |  |
+| devices.ascend.configs[2].aiCore | int | `20` |  |
+| devices.ascend.configs[2].aiCPU | int | `7` |  |
+| devices.ascend.configs[2].templates[0].name | string | `"vir05_1c_16g"` |  |
+| devices.ascend.configs[2].templates[0].memory | int | `16384` |  |
+| devices.ascend.configs[2].templates[0].aiCore | int | `5` |  |
+| devices.ascend.configs[2].templates[0].aiCPU | int | `1` |  |
+| devices.ascend.configs[2].templates[1].name | string | `"vir10_3c_32g"` |  |
+| devices.ascend.configs[2].templates[1].memory | int | `32768` |  |
+| devices.ascend.configs[2].templates[1].aiCore | int | `10` |  |
+| devices.ascend.configs[2].templates[1].aiCPU | int | `3` |  |
+| devices.ascend.configs[3].chipName | string | `"910B4-1"` |  |
+| devices.ascend.configs[3].commonWord | string | `"Ascend910B4-1"` |  |
+| devices.ascend.configs[3].resourceName | string | `"huawei.com/Ascend910B4-1"` |  |
+| devices.ascend.configs[3].resourceMemoryName | string | `"huawei.com/Ascend910B4-1-memory"` |  |
+| devices.ascend.configs[3].resourceCoreName | string | `"huawei.com/Ascend910B4-1-core"` |  |
+| devices.ascend.configs[3].memoryAllocatable | int | `65536` |  |
+| devices.ascend.configs[3].memoryCapacity | int | `65536` |  |
+| devices.ascend.configs[3].memoryFactor | int | `1` |  |
+| devices.ascend.configs[3].aiCore | int | `20` |  |
+| devices.ascend.configs[3].aiCPU | int | `7` |  |
+| devices.ascend.configs[3].templates[0].name | string | `"vir05_1c_16g"` |  |
+| devices.ascend.configs[3].templates[0].memory | int | `16384` |  |
+| devices.ascend.configs[3].templates[0].aiCore | int | `5` |  |
+| devices.ascend.configs[3].templates[0].aiCPU | int | `1` |  |
+| devices.ascend.configs[3].templates[1].name | string | `"vir10_3c_32g"` |  |
+| devices.ascend.configs[3].templates[1].memory | int | `32768` |  |
+| devices.ascend.configs[3].templates[1].aiCore | int | `10` |  |
+| devices.ascend.configs[3].templates[1].aiCPU | int | `3` |  |
+| devices.ascend.configs[4].chipName | string | `"910B4"` |  |
+| devices.ascend.configs[4].commonWord | string | `"Ascend910B4"` |  |
+| devices.ascend.configs[4].resourceName | string | `"huawei.com/Ascend910B4"` |  |
+| devices.ascend.configs[4].resourceMemoryName | string | `"huawei.com/Ascend910B4-memory"` |  |
+| devices.ascend.configs[4].resourceCoreName | string | `"huawei.com/Ascend910B4-core"` |  |
+| devices.ascend.configs[4].memoryAllocatable | int | `32768` |  |
+| devices.ascend.configs[4].memoryCapacity | int | `32768` |  |
+| devices.ascend.configs[4].memoryFactor | int | `1` |  |
+| devices.ascend.configs[4].aiCore | int | `20` |  |
+| devices.ascend.configs[4].aiCPU | int | `7` |  |
+| devices.ascend.configs[4].templates[0].name | string | `"vir05_1c_8g"` |  |
+| devices.ascend.configs[4].templates[0].memory | int | `8192` |  |
+| devices.ascend.configs[4].templates[0].aiCore | int | `5` |  |
+| devices.ascend.configs[4].templates[0].aiCPU | int | `1` |  |
+| devices.ascend.configs[4].templates[1].name | string | `"vir10_3c_16g"` |  |
+| devices.ascend.configs[4].templates[1].memory | int | `16384` |  |
+| devices.ascend.configs[4].templates[1].aiCore | int | `10` |  |
+| devices.ascend.configs[4].templates[1].aiCPU | int | `3` |  |
+| devices.ascend.configs[5].chipName | string | `"310P3"` |  |
+| devices.ascend.configs[5].commonWord | string | `"Ascend310P"` |  |
+| devices.ascend.configs[5].resourceName | string | `"huawei.com/Ascend310P"` |  |
+| devices.ascend.configs[5].resourceMemoryName | string | `"huawei.com/Ascend310P-memory"` |  |
+| devices.ascend.configs[5].resourceCoreName | string | `"huawei.com/Ascend310P-core"` |  |
+| devices.ascend.configs[5].memoryAllocatable | int | `21527` |  |
+| devices.ascend.configs[5].memoryCapacity | int | `24576` |  |
+| devices.ascend.configs[5].memoryFactor | int | `1` |  |
+| devices.ascend.configs[5].aiCore | int | `8` |  |
+| devices.ascend.configs[5].aiCPU | int | `7` |  |
+| devices.ascend.configs[5].templates[0].name | string | `"vir01"` |  |
+| devices.ascend.configs[5].templates[0].memory | int | `3072` |  |
+| devices.ascend.configs[5].templates[0].aiCore | int | `1` |  |
+| devices.ascend.configs[5].templates[0].aiCPU | int | `1` |  |
+| devices.ascend.configs[5].templates[1].name | string | `"vir02"` |  |
+| devices.ascend.configs[5].templates[1].memory | int | `6144` |  |
+| devices.ascend.configs[5].templates[1].aiCore | int | `2` |  |
+| devices.ascend.configs[5].templates[1].aiCPU | int | `2` |  |
+| devices.ascend.configs[5].templates[2].name | string | `"vir04"` |  |
+| devices.ascend.configs[5].templates[2].memory | int | `12288` |  |
+| devices.ascend.configs[5].templates[2].aiCore | int | `4` |  |
+| devices.ascend.configs[5].templates[2].aiCPU | int | `4` |  |
+| devices.ascend.configs[6].chipName | string | `"Ascend910"` |  |
+| devices.ascend.configs[6].commonWord | string | `"Ascend910C"` |  |
+| devices.ascend.configs[6].resourceName | string | `"huawei.com/Ascend910C"` |  |
+| devices.ascend.configs[6].resourceMemoryName | string | `"huawei.com/Ascend910C-memory"` |  |
+| devices.ascend.configs[6].resourceCoreName | string | `"huawei.com/Ascend910C-core"` |  |
+| devices.ascend.configs[6].memoryAllocatable | int | `65536` |  |
+| devices.ascend.configs[6].memoryCapacity | int | `65536` |  |
+| devices.ascend.configs[6].aiCore | int | `20` |  |
+| devices.ascend.configs[6].aiCPU | int | `7` |  |
+| devices.ascend.configs[6].superPod | bool | `true` |  |
+| devices.ascend.configs[6].templates[0].name | string | `"vir05_1c_16g"` |  |
+| devices.ascend.configs[6].templates[0].memory | int | `16384` |  |
+| devices.ascend.configs[6].templates[0].aiCore | int | `5` |  |
+| devices.ascend.configs[6].templates[0].aiCPU | int | `1` |  |
+| devices.ascend.configs[6].templates[1].name | string | `"vir10_3c_32g"` |  |
+| devices.ascend.configs[6].templates[1].memory | int | `32768` |  |
+| devices.ascend.configs[6].templates[1].aiCore | int | `10` |  |
+| devices.ascend.configs[6].templates[1].aiCPU | int | `3` |  |
+| devices.ascend.runtimeClassName | string | `""` |  |
+| devices.ascend.hamiVnpuMode | string | `""` |  |
 | devices.ascend.vnpuDeviceSplitCount | int | `10` | Positive integer virtual-device slots per physical Ascend NPU in hami-core mode. Requires an ascend-device-plugin version supporting vnpus.vnpuDeviceSplitCount (introduced in [#144](https://github.com/Project-HAMi/ascend-device-plugin/pull/144)). A positive node vDeviceCount takes precedence; template and ENPU modes keep their own capacity. |
+| devices.ascend.enpuPolicy | string | `"elastic"` |  |
+| devices.ascend.enabled | bool | `false` |  |
+| devices.ascend.image | string | `""` |  |
+| devices.ascend.imagePullPolicy | string | `"IfNotPresent"` |  |
+| devices.ascend.extraArgs | list | `[]` |  |
+| devices.ascend.nodeSelector.ascend | string | `"on"` |  |
+| devices.ascend.tolerations | list | `[]` |  |
+| devices.ascend.customresources[0] | string | `"huawei.com/Ascend910A"` |  |
+| devices.ascend.customresources[1] | string | `"huawei.com/Ascend910A-memory"` |  |
+| devices.ascend.customresources[2] | string | `"huawei.com/Ascend910A-core"` |  |
+| devices.ascend.customresources[3] | string | `"huawei.com/Ascend910B2"` |  |
+| devices.ascend.customresources[4] | string | `"huawei.com/Ascend910B2-memory"` |  |
+| devices.ascend.customresources[5] | string | `"huawei.com/Ascend910B2-core"` |  |
+| devices.ascend.customresources[6] | string | `"huawei.com/Ascend910B3"` |  |
+| devices.ascend.customresources[7] | string | `"huawei.com/Ascend910B3-memory"` |  |
+| devices.ascend.customresources[8] | string | `"huawei.com/Ascend910B3-core"` |  |
+| devices.ascend.customresources[9] | string | `"huawei.com/Ascend910B4"` |  |
+| devices.ascend.customresources[10] | string | `"huawei.com/Ascend910B4-memory"` |  |
+| devices.ascend.customresources[11] | string | `"huawei.com/Ascend910B4-core"` |  |
+| devices.ascend.customresources[12] | string | `"huawei.com/Ascend910B4-1"` |  |
+| devices.ascend.customresources[13] | string | `"huawei.com/Ascend910B4-1-memory"` |  |
+| devices.ascend.customresources[14] | string | `"huawei.com/Ascend910B4-1-core"` |  |
+| devices.ascend.customresources[15] | string | `"huawei.com/Ascend310P"` |  |
+| devices.ascend.customresources[16] | string | `"huawei.com/Ascend310P-memory"` |  |
+| devices.ascend.customresources[17] | string | `"huawei.com/Ascend310P-core"` |  |
+| devices.ascend.customresources[18] | string | `"huawei.com/Ascend910C"` |  |
+| devices.ascend.customresources[19] | string | `"huawei.com/Ascend910C-memory"` |  |
+| devices.ascend.customresources[20] | string | `"huawei.com/Ascend910C-core"` |  |
+| devices.iluvatar.configs[0].chipName | string | `"MR-V100"` |  |
+| devices.iluvatar.configs[0].commonWord | string | `"MR-V100"` |  |
+| devices.iluvatar.configs[0].resourceCountName | string | `"iluvatar.ai/MR-V100-vgpu"` |  |
+| devices.iluvatar.configs[0].resourceMemoryName | string | `"iluvatar.ai/MR-V100.vMem"` |  |
+| devices.iluvatar.configs[0].resourceCoreName | string | `"iluvatar.ai/MR-V100.vCore"` |  |
+| devices.iluvatar.configs[1].chipName | string | `"MR-V50"` |  |
+| devices.iluvatar.configs[1].commonWord | string | `"MR-V50"` |  |
+| devices.iluvatar.configs[1].resourceCountName | string | `"iluvatar.ai/MR-V50-vgpu"` |  |
+| devices.iluvatar.configs[1].resourceMemoryName | string | `"iluvatar.ai/MR-V50.vMem"` |  |
+| devices.iluvatar.configs[1].resourceCoreName | string | `"iluvatar.ai/MR-V50.vCore"` |  |
+| devices.iluvatar.configs[2].chipName | string | `"BI-V150"` |  |
+| devices.iluvatar.configs[2].commonWord | string | `"BI-V150"` |  |
+| devices.iluvatar.configs[2].resourceCountName | string | `"iluvatar.ai/BI-V150-vgpu"` |  |
+| devices.iluvatar.configs[2].resourceMemoryName | string | `"iluvatar.ai/BI-V150.vMem"` |  |
+| devices.iluvatar.configs[2].resourceCoreName | string | `"iluvatar.ai/BI-V150.vCore"` |  |
+| devices.iluvatar.configs[3].chipName | string | `"BI-V100"` |  |
+| devices.iluvatar.configs[3].commonWord | string | `"BI-V100"` |  |
+| devices.iluvatar.configs[3].resourceCountName | string | `"iluvatar.ai/BI-V100-vgpu"` |  |
+| devices.iluvatar.configs[3].resourceMemoryName | string | `"iluvatar.ai/BI-V100.vMem"` |  |
+| devices.iluvatar.configs[3].resourceCoreName | string | `"iluvatar.ai/BI-V100.vCore"` |  |
+| devices.iluvatar.enabled | bool | `false` |  |
+| devices.iluvatar.customresources[0] | string | `"iluvatar.ai/BI-V100-vgpu"` |  |
+| devices.iluvatar.customresources[1] | string | `"iluvatar.ai/BI-V100.vCore"` |  |
+| devices.iluvatar.customresources[2] | string | `"iluvatar.ai/BI-V100.vMem"` |  |
+| devices.iluvatar.customresources[3] | string | `"iluvatar.ai/BI-V150-vgpu"` |  |
+| devices.iluvatar.customresources[4] | string | `"iluvatar.ai/BI-V150.vCore"` |  |
+| devices.iluvatar.customresources[5] | string | `"iluvatar.ai/BI-V150.vMem"` |  |
+| devices.iluvatar.customresources[6] | string | `"iluvatar.ai/MR-V100-vgpu"` |  |
+| devices.iluvatar.customresources[7] | string | `"iluvatar.ai/MR-V100.vCore"` |  |
+| devices.iluvatar.customresources[8] | string | `"iluvatar.ai/MR-V100.vMem"` |  |
+| devices.iluvatar.customresources[9] | string | `"iluvatar.ai/MR-V50-vgpu"` |  |
+| devices.iluvatar.customresources[10] | string | `"iluvatar.ai/MR-V50.vCore"` |  |
+| devices.iluvatar.customresources[11] | string | `"iluvatar.ai/MR-V50.vMem"` |  |
 | legacyMetrics | bool | `false` | Emit legacy metric names alongside current names in the scheduler and vGPUmonitor for backward compatibility. |
 | prometheus.enabled | bool | `false` | Create scheduler and device-plugin ServiceMonitors when the API is available. The device-plugin ServiceMonitor also requires `devicePlugin.enabled`. For local `helm template`, pass `--api-versions monitoring.coreos.com/v1/ServiceMonitor`. |
 | device-config.content | string | `""` | Full replacement of device-config.yaml; takes precedence over a bundled file and values. This is a complete document, not a merge; prefer `devices.<vendor>` fields for partial overrides. Please note that extender resources still use `devices.*`, keep resource names consistent. Values validation still applies. |
@@ -554,7 +804,7 @@ make verify-helm-chart-docs
 
 Add descriptions with `# -- Description` immediately above a value in
 `values.yaml`, then regenerate this README. The commands use
-`--sort-values-order=file` to preserve the order in `values.yaml` and
-`--ignore-non-descriptions` to omit values without descriptions.
+`--sort-values-order=file` to preserve the order in `values.yaml`. Values without
+descriptions are included; use `# @ignored` to exclude a field from the table.
 Do not edit the generated table directly. Text outside the generated markers
 is maintained directly in this README.
