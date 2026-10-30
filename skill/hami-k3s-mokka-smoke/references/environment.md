@@ -1,79 +1,41 @@
-# 准备隔离的 K3s + Mokka + HAMi 环境
+# 准备隔离环境
 
-本页只准备环境，不运行测试工作负载。2026 年 10 月在 Linux/amd64 上验证过 K3s `v1.32.5+k3s1`、[官方 Mokka v0.4.0](https://github.com/NVIDIA/k8s-test-infra/blob/v0.4.0/docs/guides/device-plugin.md) 和 [HAMi v2.10.0](https://github.com/Project-HAMi/HAMi/releases/tag/v2.10.0) 的组合。它不是对其他版本的兼容承诺；换版本时重新核对 [Mokka Chart](https://github.com/NVIDIA/k8s-test-infra/blob/v0.4.0/docs/helm-chart.md)、HAMi Chart、镜像和 K3s/containerd 的 NRI 支持。
+本页用于选择兼容组件、安装并交接环境。只有任务要求验证功能时才继续[功能验证](validation.md)。需要完整命令与固定 values 的可复现起点时，使用[已测版本示例](preset-v2.10.0.md)；不要把该示例套到未核对的 Chart 或 K3s 版本上。
 
-## 预检与隔离
+## 确认输入
 
-需要 Linux/amd64、Docker、k3d、kubectl、Helm，以及足够的磁盘和内存。先检查已有集群、工具版本和目标名称，确认可以创建一个任务专属集群。以下变量仅用于当前 shell；所有后续 `kubectl` 与 `helm` 操作都显式传入专用 kubeconfig/context，不切换默认 context。
+开始前确认：
 
-```bash
-hami_run_dir=$(mktemp -d)
-hami_cluster=hami-mokka-unique-name
-hami_context="k3d-$hami_cluster"
-k3d cluster list
-k3d cluster create "$hami_cluster" --image rancher/k3s:v1.32.5-k3s1 \
-  --servers 1 --agents 1 \
-  --k3s-node-label 'mokka.nvidia.com/type=sgpu@agent:0' \
-  --k3s-node-label 'gpu=on@agent:0' \
-  --kubeconfig-update-default=false --kubeconfig-switch-context=false
-k3d kubeconfig get "$hami_cluster" > "$hami_run_dir/kubeconfig"
-chmod 600 "$hami_run_dir/kubeconfig"
-kubectl --kubeconfig "$hami_run_dir/kubeconfig" --context "$hami_context" get nodes -o wide
-```
+- 任务允许使用的主机、容器运行时和集群；是否允许创建新的隔离 k3d 集群。现有集群必须有明确归属和专用 kubeconfig/context。
+- 主机架构、可用磁盘/内存、Docker、k3d、kubectl、Helm 版本，以及已有集群和 `nvidia.com/gpu` 资源提供者。不要覆盖已有集群或让两个 device-plugin 竞争同一资源。
+- 用户指定的 HAMi、Mokka、K3s 版本及镜像来源。未指定时，可选择已测版本示例，但先确认示例镜像在当前架构和网络环境可用。
+- 交付目标是环境就绪，还是某些具体功能的验证。仅准备环境时不运行测试工作负载。
 
-若集群名已存在，不复用或覆盖。若 NRI socket/配置与本例不同，按 [Mokka NRI 指南](https://github.com/NVIDIA/k8s-test-infra/blob/v0.4.0/docs/guides/node-wide-injection/README.md) 排查，不能仅凭 DaemonSet Ready 判断注入成功。
+若以上信息不足以安全选择或创建集群，先确认归属与范围，不猜测共享环境可用。
 
-## 安装官方 Mokka
+## 选择兼容版本
 
-使用仓库内的 [T4 × 2 values](../assets/mokka-v0.4.0-t4x2.yaml)，并核对当前 Chart 的字段及渲染结果。该文件将官方镜像固定为 `ghcr.io/nvidia/nvml-mock:0.4.0@sha256:4e93522b4c2af5419e0dc3e92fcb461a630d9c16cfafce72e385348602e5ce0e`，显式启用 NRI。NRI overlay 可能影响同一节点上的其他容器，所以仅在隔离集群使用。
+1. 选定 K3s 版本，记录实际 Kubernetes 和 containerd 版本；确认所选 Mokka 版本的 NRI 集成方式适用于该组合。v0.4.0 的说明见 [Mokka NRI 指南](https://github.com/NVIDIA/k8s-test-infra/blob/v0.4.0/docs/guides/node-wide-injection/README.md)。
+2. 从[官方 Mokka 仓库](https://github.com/NVIDIA/k8s-test-infra)取同一版本的 OCI Chart 和镜像，固定镜像 digest。核对 Chart values、镜像架构和渲染结果；不要因拉取失败静默改用 `latest` 或非官方改造镜像。
+3. 从目标 HAMi release/提交取 Chart 与匹配的应用镜像，核对 Chart `appVersion`、模板传入的启动参数和实际二进制。不要混用更新的 `master` Chart 与旧 release 镜像。
+4. HAMi Chart 中的 kube-scheduler 镜像应匹配 K3s 的 Kubernetes 次版本；关闭 HAMi mock device-plugin，启用真实 NVIDIA device-plugin。配置 Mokka driver root、设备节点传递以及 agent 的 nodeSelector。字段名必须以选定 Chart 为准，不盲套示例 values。
 
-```bash
-hami_skill_dir=/absolute/path/to/skill/hami-k3s-mokka-smoke
-helm pull oci://ghcr.io/nvidia/k8s-test-infra/chart/nvml-mock \
-  --version 0.4.0 --destination "$hami_run_dir"
-sha256sum "$hami_run_dir/nvml-mock-0.4.0.tgz"
-cp "$hami_skill_dir/assets/mokka-v0.4.0-t4x2.yaml" "$hami_run_dir/mokka-values.yaml"
-helm lint "$hami_run_dir/nvml-mock-0.4.0.tgz" \
-  -f "$hami_run_dir/mokka-values.yaml" --strict
-helm template mokka "$hami_run_dir/nvml-mock-0.4.0.tgz" -n mokka \
-  -f "$hami_run_dir/mokka-values.yaml" > "$hami_run_dir/mokka-rendered.yaml"
-helm install mokka "$hami_run_dir/nvml-mock-0.4.0.tgz" -n mokka --create-namespace \
-  --kubeconfig "$hami_run_dir/kubeconfig" --kube-context "$hami_context" \
-  -f "$hami_run_dir/mokka-values.yaml" --wait --timeout 180s
-```
+如果无法确定 Chart、应用镜像或 NRI 的兼容关系，先做 `helm lint`、`helm template` 和镜像/参数检查；仍不确定时停止安装并报告缺口，不以 Pod Ready 代替兼容性证明。
 
-渲染时确认 Mokka 与 NRI DaemonSet 只落在已标记 agent；安装后核对 Pod Ready、NRI 与 containerd 连接日志、agent 的两设备配置、`/var/lib/nvml-mock/driver` 和 `/dev/nvidia0`、`/dev/nvidia1`。安装 HAMi 前确认没有其他插件注册 `nvidia.com/gpu`。Mokka 管理 Pod 中的 `nvidia-smi` 可能显示 profile 原始卡数；以 agent 实际配置、设备节点及 HAMi 注册结果为准。
+## 安装与分层检查
 
-## 安装匹配版本的真实 HAMi
+在本任务专属 k3d/K3s 集群中使用唯一名称和单独 kubeconfig。所有 `kubectl`、`helm` 命令都显式指定该 kubeconfig/context，不切换默认 context。只在标记的 worker 上部署 Mokka；NRI overlay 可能影响同节点其他容器，因此不能放到共享节点。记录 Chart 包 SHA-256、渲染清单、values 副本及实际镜像 `imageID`。
 
-从 HAMi v2.10.0 release 源码取原版 Chart，与其 v2.10.0 应用镜像一起使用。不要把不断变化的 `master` Chart 与旧应用镜像混装：2026-10-30 的 `master` Chart 搭配 v2.10.0 镜像曾因新参数 `--report-node-capacity` 和 `--extender-bind` 无法启动。换用其他版本前先核对 Chart `appVersion`、镜像及参数。
+按下列顺序安装与判断：
 
-本例 K3s 为 v1.32.5，因此 [HAMi values](../assets/hami-v2.10.0-k3s-v1.32.5.yaml) 将 kube-scheduler 镜像设为 v1.32.5，禁用 HAMi 的 mock device-plugin，启用真实 NVIDIA device-plugin，并指向 Mokka driver root。
+1. 安装 Mokka，并确认 agent、NRI Pod 就绪；检查 NRI 与 containerd 的连接日志、生成的模拟设备配置、driver root 和 `/dev/nvidia*`。Mokka 管理 Pod 的 `nvidia-smi` 可能显示 profile 原始设备数，以 agent 配置及设备节点为准。
+2. 安装匹配版本的 HAMi。确认 scheduler、webhook、真实 NVIDIA device-plugin 和 monitor 启动，没有镜像拉取、参数或 ABI 错误。Mokka 的 NRI 默认可能排除 `kube-system`，不要把需要注入的 HAMi 组件放在被排除的 namespace。
+3. 核对 Node 上不同的 GPU UUID、注册容量和实际驱动配置。容量应由模拟设备数和当前 `deviceSplitCount` 推导，不能照抄示例数值。此时只可报告「环境就绪／设备注册」，不能报告调度或 Allocate 通过。
 
-```bash
-git clone --depth 1 --branch v2.10.0 https://github.com/Project-HAMi/HAMi.git \
-  "$hami_run_dir/hami-source"
-git -C "$hami_run_dir/hami-source" rev-parse HEAD
-helm show chart "$hami_run_dir/hami-source/charts/hami"
-cp "$hami_skill_dir/assets/hami-v2.10.0-k3s-v1.32.5.yaml" "$hami_run_dir/hami-values.yaml"
-helm lint "$hami_run_dir/hami-source/charts/hami" \
-  -f "$hami_run_dir/hami-values.yaml" --strict
-helm template hami "$hami_run_dir/hami-source/charts/hami" -n hami-system \
-  -f "$hami_run_dir/hami-values.yaml" > "$hami_run_dir/hami-rendered.yaml"
-helm install hami "$hami_run_dir/hami-source/charts/hami" \
-  -n hami-system --create-namespace \
-  --kubeconfig "$hami_run_dir/kubeconfig" --kube-context "$hami_context" \
-  -f "$hami_run_dir/hami-values.yaml" --wait --timeout 180s
-```
+失败时保留现场证据，优先检查镜像与架构、NRI socket、namespace 排除、nodeSelector、driver root、同名资源竞争、Chart 模板及 kube-scheduler 版本。修复后重新检查受影响的层级，不用关闭健康检查或更换未经核对的镜像制造成功结果。
 
-预期 release checkout 为 `4707fb02c91c545bc7343ce26dba4c32919f9a3e`，Chart `appVersion=2.10.0`；不匹配时停止并重新核对，不继续套用 values。渲染时确认 kube-scheduler 镜像、device-plugin 的 driver-root 挂载、`passDeviceSpecsEnabled` 和 nodeSelector。HAMi 安装在 `hami-system`，不要安装到 Mokka NRI 默认排除的 `kube-system`。若镜像拉取或进程 ABI 出错，记录实际 `imageID` 与日志，不静默替换版本。
+## 交接与清理
 
-## 就绪与交接
+交接集群名称、专用 kubeconfig **路径**和 context、版本/镜像 digest、两个 release 与 namespace、values 副本、Pod `imageID`、Node UUID/容量、日志异常、已验证和未验证层级。不要发送 kubeconfig 内容或其他凭据。默认保留已交接环境供后续任务使用。
 
-分别记录：Node Ready；Mokka agent/NRI 就绪和两设备配置；HAMi webhook/scheduler、真实 NVIDIA device-plugin/monitor 就绪；Node 注册的 GPU UUID 与容量。此基线预期是两个不同 T4 UUID、每张 `deviceSplitCount=10`，共 20 个逻辑 `nvidia.com/gpu` 槽位。若只完成这些检查，只能称环境就绪和注册通过，不能称调度或 Allocate 通过。
-
-交接集群名、专用 kubeconfig **路径**及 context、两个 release/namespace、版本与镜像 digest、values 副本、Node UUID/容量、实际 `imageID`、日志异常和未验证项。不要上传 kubeconfig 正文或其他凭据。默认保留环境给后续测试使用；需要验证时再读[可选回归](validation.md)。
-
-## 按需清理
-
-只有明确要求销毁，或确认本次环境生命周期结束且无人使用时才清理。先复核集群归属和名称，保存需要的证据；用专用 kubeconfig/context 卸载本次安装的 HAMi 和 Mokka release，等相关 Pod 退出后再删本次创建的 k3d 集群及专用 kubeconfig。等待超时则保留现场排查，不强制删除未知资源，不操作默认 kubeconfig、共享镜像或卷。
+只有用户要求销毁，或确认本任务创建的环境已结束且无人依赖时，才按确切名称清理：先保存证据，卸载本任务的 HAMi 与 Mokka release，等待相关 Pod 退出，再删除本任务的 k3d 集群和专用 kubeconfig。等待超时则保留现场排查；不删除未知资源、共享镜像或卷。
