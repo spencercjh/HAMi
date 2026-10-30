@@ -9,7 +9,7 @@ description: 在没有 NVIDIA GPU 的主机上，用隔离的 k3d/K3s 集群、�
 
 按当前任务读取所需内容：
 
-- 新建或交接环境：读[环境准备](references/environment.md)。用户未指定版本且需要可复现起点时，再读[已测版本示例](references/preset-v2.10.0.md)；示例不是所有环境的兼容承诺。
+- 新建或交接环境：读[环境准备](references/environment.md)。未指定版本时，执行时查询 HAMi 和 Mokka 各自最新的正式版。所选版本恰与[已测版本示例](references/preset-v2.10.0.md)一致、且需要具体命令时再读示例；示例不是默认安装版本或其他版本的兼容承诺。
 - 使用已交接环境验证指定行为：读[功能验证](references/validation.md)；缺少环境信息时，再读[环境准备](references/environment.md)的交接要求。
 - 清理本次环境：读[环境准备](references/environment.md)的清理条件。没有明确归属和停用条件时不要删除。
 

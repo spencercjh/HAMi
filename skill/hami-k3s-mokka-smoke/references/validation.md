@@ -15,6 +15,6 @@
 
 - **容量：**根据当前设备数和每卡显存计算可容纳的 Pod 数，再逐个提交。示例的两张 16 GiB T4 各可放两个 7000 MiB Pod；第五个应因显存不足等待。记录调度事件。仅删除本次创建的一个运行 Pod 后，确认等待 Pod 获得资源。逻辑 GPU 槽位数不等于显存容量。
 - **插件重启：**先记录 UUID、容量、旧 Pod UID/containerID；只重启本次 HAMi device-plugin，确认注册没有重复、旧容器未改变，再触发新 Allocate。
-- **故障注入：**仅在任务明确要求时，依照 [Mokka failure-injection 指南](https://github.com/NVIDIA/k8s-test-infra/blob/v0.4.0/docs/guides/failure-injection/README.md)制定注入、留证和重置步骤。Xid 可能被多个 watcher 竞争消费；结果不稳定时如实标记，不关闭健康检查制造通过。
+- **故障注入：**仅在任务明确要求时，在 [Mokka failure-injection 指南目录](https://github.com/NVIDIA/k8s-test-infra/tree/main/docs/guides/failure-injection)切换到所选 release tag，阅读对应指南，再制定注入、留证和重置步骤。Xid 可能被多个 watcher 竞争消费；结果不稳定时如实标记，不关闭健康检查制造通过。
 
 交付时按驱动、注册、调度、Allocate、容器、容量、重启和故障分别标记 `PASS`、`FAIL`、`BLOCKED` 或 `NOT TESTED`。记录版本、镜像 digest、预期与实际值、证据路径及失败原因；未执行项写 `NOT TESTED`。测试结束不自动卸载已交接环境。模拟环境不能证明真实 CUDA 执行、GPU 隔离或生产性能。

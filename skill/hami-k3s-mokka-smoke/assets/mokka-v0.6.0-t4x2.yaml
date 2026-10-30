@@ -1,0 +1,12 @@
+gpu:
+  profile: t4
+  count: 2
+nodeSelector:
+  mokka.nvidia.com/type: sgpu
+nri:
+  enabled: true
+nodeAgent:
+  containerRuntime:
+    enabled: false
+image:
+  digest: sha256:ef08b511cf20ea55f49fee7dcf2b97ec252d4107968e1c08dd450643e89b981d
