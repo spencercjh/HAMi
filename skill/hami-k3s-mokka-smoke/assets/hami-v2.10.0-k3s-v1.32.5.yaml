@@ -1,0 +1,18 @@
+scheduler:
+  defaultSchedulerPolicy:
+    gpuSchedulerPolicy: binpack
+  kubeScheduler:
+    image:
+      registry: registry.k8s.io
+      repository: kube-scheduler
+      tag: v1.32.5
+mockDevicePlugin:
+  enabled: false
+devicePlugin:
+  enabled: true
+  runtimeClassName: ""
+  nvidiaNodeSelector:
+    gpu: "on"
+  nvidiaDriverRoot: /var/lib/nvml-mock/driver
+  passDeviceSpecsEnabled: true
+  deviceSplitCount: 10

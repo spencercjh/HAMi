@@ -1,0 +1,9 @@
+gpu:
+  profile: t4
+  count: 2
+nodeSelector:
+  mokka.nvidia.com/type: sgpu
+nri:
+  enabled: true
+image:
+  tag: 0.4.0@sha256:4e93522b4c2af5419e0dc3e92fcb461a630d9c16cfafce72e385348602e5ce0e
